@@ -28,6 +28,8 @@ import {
     Badge
 } from '@mui/material'
 
+const BACKEND_URL = 'https://spur-ai-backend.onrender.com';
+
 const theme = createTheme({
     palette: {
         primary: { main: '#1a73e8' },
@@ -84,8 +86,14 @@ function App() {
         if (sessionId) fetchHistory(sessionId)
 
         // Socket.io Setup
-        socketRef.current = io('https://spur-ai-backend.onrender.com')
-        socketRef.current.on('online_count', (count: number) => {
+        const newSocket = io('https://spur-ai-backend.onrender.com')
+        socketRef.current = newSocket
+
+        newSocket.on('connect_error', (err) => {
+            console.warn("Socket connection failed (non-critical):", err.message);
+        })
+
+        newSocket.on('online_count', (count: number) => {
             setOnlineCount(count)
         })
 
@@ -96,17 +104,19 @@ function App() {
 
     const fetchConversations = async () => {
         try {
-            const response = await axios.get('/chat/conversations')
-            setConversations(response.data.conversations)
+            const response = await axios.get(`${BACKEND_URL}/chat/conversations`)
+            setConversations(response.data?.conversations || [])
         } catch (error) {
             console.error('Failed to fetch conversations:', error)
+            setConversations([])
         }
     }
 
     const fetchHistory = async (id: string) => {
         try {
-            const response = await axios.get(`/chat/history/${id}`)
-            const fixedMessages = response.data.messages.map((m: any) => ({
+            const response = await axios.get(`${BACKEND_URL}/chat/history/${id}`)
+            const msgs = response.data?.messages || []
+            const fixedMessages = msgs.map((m: any) => ({
                 ...m,
                 text: typeof m.text === 'string' ? m.text : JSON.stringify(m.text)
             }))
@@ -159,7 +169,7 @@ function App() {
             if (sessionId) formData.append('sessionId', sessionId)
             if (currentFile) formData.append('file', currentFile)
 
-            const response = await fetch('/chat/stream', {
+            const response = await fetch(`${BACKEND_URL}/chat/stream`, {
                 method: 'POST',
                 body: formData
             })
@@ -236,7 +246,7 @@ function App() {
         e.stopPropagation()
         if (!window.confirm('Are you sure you want to delete this chat?')) return
         try {
-            await axios.delete(`/chat/conversation/${id}`)
+            await axios.delete(`${BACKEND_URL}/chat/conversation/${id}`)
             fetchConversations()
             if (sessionId === id) startNewChat()
         } catch (error) {
