@@ -84,7 +84,7 @@ function App() {
         if (sessionId) fetchHistory(sessionId)
 
         // Socket.io Setup
-        socketRef.current = io('http://localhost:3001')
+        socketRef.current = io('https://spur-ai-backend.onrender.com')
         socketRef.current.on('online_count', (count: number) => {
             setOnlineCount(count)
         })
@@ -363,7 +363,7 @@ function App() {
                                         <Box sx={{ mb: 1 }}>
                                             {msg.attachmentType === 'image' ? (
                                                 <img
-                                                    src={msg.attachmentUrl.startsWith('blob:') ? msg.attachmentUrl : `http://localhost:3001${msg.attachmentUrl}`}
+                                                    src={msg.attachmentUrl.startsWith('blob:') ? msg.attachmentUrl : `https://spur-ai-backend.onrender.com${msg.attachmentUrl}`}
                                                     alt="Attachment"
                                                     style={{ maxWidth: '100%', borderRadius: 8 }}
                                                 />
